@@ -63,7 +63,7 @@ void ImageFileTestApp::setup()
 	
 	mAngle = 0.0f;
 	
-	setWindowSize(1024, 1024);
+	setWindowSize(800, 600);
 	
 	mCam.lookAt(Vec3f(0,3,5), Vec3f::zero());
 }
@@ -87,7 +87,8 @@ void ImageFileTestApp::draw()
 	glEnable( GL_LIGHTING );
 	glEnable( GL_LIGHT0 );
 	
-	GLfloat light_position0[] = { -sin(time)*5, 3, cos(time)*5, 1 };
+	//GLfloat light_position0[] = { -sin(time)*5, 3, cos(time)*5, 1 };
+	GLfloat light_position0[] = { 3, 1, 5, 1 };
 	glLightfv( GL_LIGHT0, GL_POSITION, light_position0 );
 	
 	GLfloat light_color0[] = { 1,1,1,1 };
@@ -113,14 +114,34 @@ void ImageFileTestApp::draw()
 	mShader.uniform("time", time);	
 	mShader.uniform("resolution", resolution);
 	mShader.uniform("variation", 2);
+
+	static float rx = 0;
+	static float ry = 0;
+	static float rz = 0;
+
+	rx = 500 *  time / 7.7f;
+	ry = 500 *  time / 15.0f;
+	rz = 500 *  time / 27.3f;
 	
-	gl::drawSphere(Vec3f(0, 0, 0), 0.5f, 64);
+	const int num_spheres = 10;
+	for(int i = 0; i<num_spheres; ++i)
+	{
+		float f = i/(float)num_spheres;
+
+		float angle = (f + time * 0.01f) * M_PI * 2.0f;
+
+		gl::pushModelView();
+		gl::rotate(Vec3f(ry, 2*rx, 3.0f*rz));
+		gl::translate(Vec3f(1 * cos(angle), 0, -1 * sin(angle)));
+		gl::drawSphere(Vec3f(0, 0, 0), 0.25f, 64);
+		gl::popModelView();
+	}
+
+	gl::rotate(Vec3f(rx, ry, rz));
+	gl::drawTorus(0.5f, 0.25f, 64, 64);
+	//gl::drawSphere(Vec3f(0, 0, 0), 0.5f, 64);
 	//gl::drawCylinder(0.5f, 0.5f, 1.0f);
 	
-	gl::translate(Vec3f(0,-1,0));
-	
-	gl::drawCube(Vec3f::zero(), Vec3f::one());
-
 	mTexture.unbind();
 	
 	gl::popModelView();

@@ -15,11 +15,12 @@
 		00C076310FF33D34004801EA /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00C0762D0FF33D34004801EA /* CoreAudio.framework */; };
 		00CAA0ED0EB4DDD10007F187 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00CAA0EC0EB4DDD10007F187 /* CoreVideo.framework */; };
 		00CAA0F20EB4DDDC0007F187 /* QTKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00CAA0F10EB4DDDC0007F187 /* QTKit.framework */; };
-		00CD22AC1173CA600051407E /* cinder_logo.png in Resources */ = {isa = PBXBuildFile; fileRef = 00CD22AB1173CA600051407E /* cinder_logo.png */; };
 		00D9A0C10EA5950500FF5AEB /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00D9A0C00EA5950500FF5AEB /* OpenGL.framework */; };
 		00D9A1320EA5998700FF5AEB /* gaussianBlur_frag.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 00D9A1300EA5998700FF5AEB /* gaussianBlur_frag.glsl */; };
 		00D9A1330EA5998700FF5AEB /* passThru_vert.glsl in Resources */ = {isa = PBXBuildFile; fileRef = 00D9A1310EA5998700FF5AEB /* passThru_vert.glsl */; };
+		2887F97B155DBDA7006CF0FB /* SimpleGUI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2887F978155DBD01006CF0FB /* SimpleGUI.cpp */; };
 		28C20FC0155C50B9000D3DD9 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 28C20FBF155C50B9000D3DD9 /* assets */; };
+		28D8978F155EAB1A0080DAB5 /* Knotty.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28D8978E155EAB1A0080DAB5 /* Knotty.cpp */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 /* End PBXBuildFile section */
@@ -33,7 +34,6 @@
 		00C0762D0FF33D34004801EA /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
 		00CAA0EC0EB4DDD10007F187 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = SDKs/MacOSX10.5.sdk/System/Library/Frameworks/CoreVideo.framework; sourceTree = DEVELOPER_DIR; };
 		00CAA0F10EB4DDDC0007F187 /* QTKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QTKit.framework; path = SDKs/MacOSX10.5.sdk/System/Library/Frameworks/QTKit.framework; sourceTree = DEVELOPER_DIR; };
-		00CD22AB1173CA600051407E /* cinder_logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = cinder_logo.png; path = ../../data/cinder_logo.png; sourceTree = SOURCE_ROOT; };
 		00D9A0C00EA5950500FF5AEB /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = /System/Library/Frameworks/OpenGL.framework; sourceTree = "<absolute>"; };
 		00D9A0DB0EA595BA00FF5AEB /* Resources.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Resources.h; path = ../Resources.h; sourceTree = SOURCE_ROOT; };
 		00D9A1300EA5998700FF5AEB /* gaussianBlur_frag.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = gaussianBlur_frag.glsl; path = ../data/gaussianBlur_frag.glsl; sourceTree = SOURCE_ROOT; };
@@ -41,7 +41,10 @@
 		089C165DFE840E0CC02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
 		13E42FB307B3F0F600E4EEF1 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = /System/Library/Frameworks/CoreData.framework; sourceTree = "<absolute>"; };
+		2887F978155DBD01006CF0FB /* SimpleGUI.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SimpleGUI.cpp; path = ../SimpleGUI.cpp; sourceTree = "<group>"; };
+		2887F979155DBD01006CF0FB /* SimpleGUI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SimpleGUI.h; path = ../SimpleGUI.h; sourceTree = "<group>"; };
 		28C20FBF155C50B9000D3DD9 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../assets; sourceTree = "<group>"; };
+		28D8978E155EAB1A0080DAB5 /* Knotty.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Knotty.cpp; sourceTree = "<group>"; };
 		29B97324FDCFA39411CA2CEA /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		29B97325FDCFA39411CA2CEA /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		32CA4F630368D1EE00C91783 /* shaderTest_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = shaderTest_Prefix.pch; sourceTree = "<group>"; };
@@ -128,7 +131,10 @@
 		29B97315FDCFA39411CA2CEA /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				2887F978155DBD01006CF0FB /* SimpleGUI.cpp */,
+				2887F979155DBD01006CF0FB /* SimpleGUI.h */,
 				007432900EA63F01005DD3E6 /* shaderTest.cpp */,
+				28D8978E155EAB1A0080DAB5 /* Knotty.cpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -136,7 +142,6 @@
 		29B97317FDCFA39411CA2CEA /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				00CD22AB1173CA600051407E /* cinder_logo.png */,
 				00D9A1300EA5998700FF5AEB /* gaussianBlur_frag.glsl */,
 				00D9A1310EA5998700FF5AEB /* passThru_vert.glsl */,
 				8D1107310486CEB800E47090 /* Info.plist */,
@@ -207,7 +212,6 @@
 				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
 				00D9A1320EA5998700FF5AEB /* gaussianBlur_frag.glsl in Resources */,
 				00D9A1330EA5998700FF5AEB /* passThru_vert.glsl in Resources */,
-				00CD22AC1173CA600051407E /* cinder_logo.png in Resources */,
 				28C20FC0155C50B9000D3DD9 /* assets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -219,7 +223,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2887F97B155DBDA7006CF0FB /* SimpleGUI.cpp in Sources */,
 				007432910EA63F01005DD3E6 /* shaderTest.cpp in Sources */,
+				28D8978F155EAB1A0080DAB5 /* Knotty.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

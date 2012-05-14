@@ -61,6 +61,8 @@ vec4 subScatterFS()
 	indirectLightComponent.g *= ExtinctionCoefficient.g;
 	indirectLightComponent.b *= ExtinctionCoefficient.b;
 	
+	//return vec4(indirectLightComponent, 0.0) ;
+	
 	vec3 rim = vec3(1.0 - max(0.0,dot(wNorm,eVec)));
 	rim *= rim;
 	rim *= max(0.0,dot(wNorm,lVec)) * gl_FrontMaterial.specular.rgb;

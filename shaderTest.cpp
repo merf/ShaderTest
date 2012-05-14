@@ -18,7 +18,7 @@ using namespace ci;
 using namespace ci::app;
 
 Vec3f extinction_coefficient = Vec3f(1.0, 1.0, 1.0);
-float thickness = 0.1f;
+float thickness = 0.6f;
 float shininess = 20.0;
 float fresnel_power = 0.5f;
 float specular_intensity = 0.1f;
@@ -143,15 +143,16 @@ void ShaderTestApp::setup()
 
 	m_RecreateFBO = false;
 	
-	m_Cam.lookAt(Vec3f(0,0,4), Vec3f::zero());
+	m_Cam.lookAt(Vec3f(0,0,10), Vec3f::zero());
 	
-	mp_Palette = new CPalette("flower_power.aco");
+	mp_Palette = new CPalette("goldfish.aco");
 	
 	mp_GUI = new mowa::sgui::SimpleGUI(this);
-	mp_GUI->bgColor = mp_Palette->getColor(4);
-	mp_GUI->lightColor = mp_Palette->getColor(1);
-	mp_GUI->textColor = mp_Palette->getColor(3);
+	mp_GUI->bgColor = ColorA(0.2f, 0.2f, 0.2f, 0.8f);
+	mp_GUI->bgColor = mp_Palette->getColor(3);
 	mp_GUI->darkColor = mp_Palette->getColor(0);
+	mp_GUI->lightColor = mp_Palette->getColor(2);
+	mp_GUI->textColor = mp_Palette->getColor(1);
 //	mp_GUI->bgColor = ColorA(1.0f, 0.0f, 0.0f, 1.0f);
 	
 	mp_GUI->addColumn();
@@ -164,10 +165,10 @@ void ShaderTestApp::setup()
 	
 	mp_GUI->addColumn();
 	mp_GUI->addLabel("Lighting");
-	mp_GUI->addParam("thickness", &thickness, 0, 10.0f, thickness);
-	mp_GUI->addParam("extinction_coefficient red", &extinction_coefficient.x, 0, 1, extinction_coefficient.x);
-	mp_GUI->addParam("extinction_coefficient green", &extinction_coefficient.y, 0, 1, extinction_coefficient.y);
-	mp_GUI->addParam("extinction_coefficient blue", &extinction_coefficient.z, 0, 1, extinction_coefficient.z);
+	mp_GUI->addParam("thickness", &thickness, 0, 1.0f, thickness);
+	mp_GUI->addParam("extinction red", &extinction_coefficient.x, 0, 1, extinction_coefficient.x);
+	mp_GUI->addParam("extinction green", &extinction_coefficient.y, 0, 1, extinction_coefficient.y);
+	mp_GUI->addParam("extinction blue", &extinction_coefficient.z, 0, 1, extinction_coefficient.z);
 	
 
 	mp_GUI->addColumn();
@@ -295,7 +296,7 @@ void ShaderTestApp::DrawSceneToFBO()
 	float rot = M_PI * 2.0f * pow(explode, 2.0f);
 	
 	
-	m_Cam.lookAt(Vec3f(-dist*sin(rot), 0, dist*cos(rot)), Vec3f::zero(), Vec3f(0,-1,0));
+	m_Cam.lookAt(Vec3f(-dist*sin(rot), 1, dist*cos(rot)), Vec3f::zero(), Vec3f(0,-1,0));
 	
 	curr_time = getElapsedSeconds();
 	resolution = getWindowSize();
@@ -306,7 +307,8 @@ void ShaderTestApp::DrawSceneToFBO()
 	glEnable( GL_LIGHTING );
 	glEnable( GL_LIGHT0 );
 	
-	Vec4f light_position0 = Vec4f(6 * cos(curr_time), 1, 10 * -sin(curr_time), 1);
+	Vec4f light_position0 = Vec4f(2 * cos(curr_time), 0, 2 * -sin(curr_time), 1);
+	//light_position0 = Vec4f(5, 1, 3, 1);
 	glLightfv( GL_LIGHT0, GL_POSITION, light_position0.ptr() );
 	
 	ColorA light_color0 = ColorA(1,1,1,1);
@@ -335,9 +337,9 @@ void ShaderTestApp::DrawSceneToFBO()
 
 	//ci::Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0,1,0), 0.0f);
 	//m_PrevModelView = ci::Matrix44f::createRotation(Vec3f(0,1,0), -0.5f);
-	//ci::Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f).normalized(), -1.5f *  time * M_PI);
-	Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0, 1.0f, 0.0f).normalized(), powf(sin(1.5f *  curr_time), 3.0f) * M_PI * 0.5f);
-	model_view = Matrix44f::identity();
+	Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f).normalized(), 0.1f *  curr_time * M_PI);
+	//Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0, 1.0f, 0.0f).normalized(), powf(sin(1.5f *  curr_time), 3.0f) * M_PI * 0.5f);
+	//model_view = Matrix44f::identity();
 	
 	gl::multModelView(model_view);
 
@@ -355,6 +357,7 @@ void ShaderTestApp::DrawSceneToFBO()
 	m_Shader.uniform("LightColor", ColorA(1.0, 1.0, 0.8f, 1.0f));
 	m_Shader.uniform("ExtinctionCoefficient", extinction_coefficient);
 	m_Shader.uniform("MaterialThickness", thickness);
+	m_Shader.uniform("RimScalar", fresnel_intensity);
 	
 	m_Shader.uniform("particle", false);
 	

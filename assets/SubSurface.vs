@@ -21,7 +21,7 @@ varying vec3 worldNormal, eyeVec, lightVec, vertPos, lightPos;
 
 void subScatterVS(in vec4 ecVert)
 {
-	lightVec = LightPosition - ecVert.xyz;
+	lightVec = gl_LightSource[0].position.xyz - ecVert.xyz;
 	eyeVec = -ecVert.xyz;
 	vertPos = ecVert.xyz;
 	lightPos = gl_LightSource[0].position.xyz;

@@ -302,7 +302,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
-				USER_HEADER_SEARCH_PATHS = "$(CINDER_PATH)/include";
+				USER_HEADER_SEARCH_PATHS = "$(CINDER_PATH)/include $(CINDER_PATH)/blocks/Palette";
 			};
 			name = Debug;
 		};
@@ -319,7 +319,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
-				USER_HEADER_SEARCH_PATHS = "$(CINDER_PATH)/include";
+				USER_HEADER_SEARCH_PATHS = "$(CINDER_PATH)/include $(CINDER_PATH)/blocks/Palette";
 			};
 			name = Release;
 		};

@@ -17,9 +17,10 @@ toneburst 2008
 uniform float MaterialThickness;
 uniform vec3 ExtinctionCoefficient; // Will show as X Y and Z ports in QC, but actually represent RGB values.
 uniform vec4 LightColor;
-uniform vec4 BaseColor;
-uniform vec4 SpecColor;
-uniform float SpecPower;
+//uniform vec4 BaseColor;
+//uniform vec4 SpecColor;
+//uniform float SpecPower;
+
 uniform float RimScalar;
 //uniform sampler2D Texture;
 
@@ -35,22 +36,24 @@ float halfLambert(in vec3 vect1, in vec3 vect2)
 float blinnPhongSpecular(in vec3 normalVec, in vec3 lightVec, in float specPower)
 {
 	vec3 halfAngle = normalize(normalVec + lightVec);
-	return pow(clamp(0.0,1.0,dot(normalVec,halfAngle)),specPower);
+	return pow(clamp(0.0,1.0,dot(normalVec,halfAngle)), specPower);
 }
 
 // Main fake sub-surface scatter lighting function
 
 vec4 subScatterFS()
 {
-	float attenuation = 10.0 * (1.0 / distance(lightPos,vertPos));
+	float attenuation = 10.0 * (1.0 / distance(lightPos, vertPos));
 	vec3 eVec = normalize(eyeVec);
 	vec3 lVec = normalize(lightVec);
 	vec3 wNorm = normalize(worldNormal);
 	
 	vec4 dotLN = vec4(halfLambert(lVec,wNorm) * attenuation);
 	//dotLN *= texture2D(Texture, gl_TexCoord[0].xy);
-	dotLN *= BaseColor;
-	
+	dotLN *= gl_FrontMaterial.diffuse;
+
+	//return dotLN;
+
 	vec3 indirectLightComponent = vec3(MaterialThickness * max(0.0,dot(-wNorm,lVec)));
 	indirectLightComponent += MaterialThickness * halfLambert(-eVec,lVec);
 	indirectLightComponent *= attenuation;
@@ -60,19 +63,16 @@ vec4 subScatterFS()
 	
 	vec3 rim = vec3(1.0 - max(0.0,dot(wNorm,eVec)));
 	rim *= rim;
-	rim *= max(0.0,dot(wNorm,lVec)) * SpecColor.rgb;
+	rim *= max(0.0,dot(wNorm,lVec)) * gl_FrontMaterial.specular.rgb;
 	
 	vec4 finalCol = dotLN + vec4(indirectLightComponent,1.0);
+	//return finalCol;
+	
 	finalCol.rgb += (rim * RimScalar * attenuation * finalCol.a);
-	finalCol.rgb += vec3(blinnPhongSpecular(wNorm,lVec,SpecPower) * attenuation * SpecColor * finalCol.a * 0.05);
+	finalCol.rgb += vec3(blinnPhongSpecular(wNorm,lVec,gl_FrontMaterial.shininess) * attenuation * gl_FrontMaterial.specular.rgb * finalCol.a * 0.05);
 	finalCol.rgb *= LightColor.rgb;
 	
-	finalCol.rgb = dot(lVec, wNorm) * vec3(1,1,1);
-	finalCol.rgb = lVec;
-	finalCol.rgb = wNorm;
-	float d = attenuation*0.1;
-	finalCol.rgb = vec3(d,d,d);
-	return finalCol;	
+	return finalCol;
 }
 
 ////////////////
@@ -82,5 +82,6 @@ vec4 subScatterFS()
 void main()
 {
 	gl_FragColor = subScatterFS();
+	
 	//gl_FragColor = vec4(eyeVec, 1);
 }

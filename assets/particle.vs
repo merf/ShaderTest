@@ -11,10 +11,9 @@ void main() {
 
 	const float model_begin = 1.2;
 	const float model_height = 4.0;
-	float tmp = (pos.y + model_begin + (cos(pos.x*10.0+pos.z*7.3)*0.1 * cos(pos.x*143.0)*0.05))/model_height;
-	tmp -= 0.01;
+	float tmp = (pos.y + model_begin + (cos(pos.x*10.0+pos.z*7.3)*0.1 * cos(pos.x*143.0)*0.1))/model_height;
 	float offsettime = explode - tmp;
-
+	
 	if(tmp < explode) 
 	{
 		vec3 disperse;
@@ -39,9 +38,11 @@ void main() {
     }
 	else
 	{
-		pos = vec4(0,0,0,0);
+		//pos = vec4(0,0,0,0);
 	}
 
+	pos = vec4(0,0,0,0);
+	
 	gl_Position = gl_ModelViewProjectionMatrix * pos;
 	pos = gl_ModelViewMatrix * pos;
 

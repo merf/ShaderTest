@@ -12,9 +12,13 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include "Palette.h"
+
 using namespace ci;
 using namespace ci::app;
 
+Vec3f extinction_coefficient = Vec3f(1.0, 1.0, 1.0);
+float thickness = 0.1f;
 float shininess = 20.0;
 float fresnel_power = 0.5f;
 float specular_intensity = 0.1f;
@@ -22,9 +26,13 @@ float fresnel_intensity = 0.1f;
 float explode = 0.0f;
 bool exploding = false;
 
+float curr_time;
+Vec2f resolution;
+
 ColorA diffuse_color = ColorA(0.7f, 0.3f, 0.4f, 1.0f);
 
-
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 class ShaderTestApp : public AppBasic 
 {
  public: 	
@@ -40,26 +48,31 @@ class ShaderTestApp : public AppBasic
 	bool Explode(MouseEvent event) { exploding = true; return true; }
 	bool ResetExplosion(MouseEvent event) { exploding = false; return true; }
 	
+	void BindShaderAndSetUniforms(gl::GlslProg& shader);
+	
 	gl::Texture				m_Texture;
 	gl::GlslProg			m_Shader;
-	gl::GlslProg			m_ParticleShader;
 	gl::GlslProg			m_PostProcessShader;
 	
 	TriMesh					m_TriMesh;
 	gl::VboMesh				m_Mesh;
 	
 	gl::Fbo					m_FBO;
+	bool					m_RecreateFBO;
 	
 	CameraPersp				m_Cam;
 	mowa::sgui::SimpleGUI*	mp_GUI;
 	
 	ci::Matrix44f			m_PrevModelView;
+	
+	CPalette*				mp_Palette;
 };
 
 
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 void ShaderTestApp::setup()
 {
-	std::string mesh = "monkey288k";
+	std::string mesh = "monkey72k";
 	std::string trimesh_file = mesh;
 	trimesh_file.append(".trimesh");
 	std::string obj_file = mesh;
@@ -108,8 +121,8 @@ void ShaderTestApp::setup()
 	try 
 	{
 		//mShader = gl::GlslProg(loadAsset("Diffuse.vs"), loadAsset("Diffuse.fs"));
-		m_Shader = gl::GlslProg(loadAsset("Specular.vs"), loadAsset("Specular.fs"));
-		m_ParticleShader = gl::GlslProg(loadAsset("Particle.vs"), loadAsset("Specular.fs"));
+		m_Shader = gl::GlslProg(loadAsset("SubSurface.vs"), loadAsset("SubSurface.fs"));
+		//m_Shader = gl::GlslProg(loadAsset("Specular.vs"), loadAsset("Specular.fs"));
 		m_PostProcessShader = gl::GlslProg(loadAsset("PassThrough.vs"), loadAsset("PostProcess.fs"));
 	}
 	catch( gl::GlslProgCompileExc &exc ) 
@@ -127,16 +140,37 @@ void ShaderTestApp::setup()
 	gl::Fbo::Format fmt;
 	fmt.enableColorBuffer(true, 2);
 	m_FBO = gl::Fbo(getWindowWidth(), getWindowHeight(), fmt);
+
+	m_RecreateFBO = false;
 	
 	m_Cam.lookAt(Vec3f(0,0,4), Vec3f::zero());
 	
+	mp_Palette = new CPalette("flower_power.aco");
+	
 	mp_GUI = new mowa::sgui::SimpleGUI(this);
+	mp_GUI->bgColor = mp_Palette->getColor(4);
+	mp_GUI->lightColor = mp_Palette->getColor(1);
+	mp_GUI->textColor = mp_Palette->getColor(3);
+	mp_GUI->darkColor = mp_Palette->getColor(0);
+//	mp_GUI->bgColor = ColorA(1.0f, 0.0f, 0.0f, 1.0f);
+	
+	mp_GUI->addColumn();
 	mp_GUI->addLabel("Shader");
 	mp_GUI->addParam("colour", &diffuse_color, diffuse_color);
 	mp_GUI->addParam("shininess", &shininess, 1.0f, 100, shininess);
 	mp_GUI->addParam("fresnel_power", &fresnel_power, 0.001, 5, fresnel_power);
 	mp_GUI->addParam("specular_intensity", &specular_intensity, 0, 0.5f, specular_intensity);
 	mp_GUI->addParam("fresnel_intensity", &fresnel_intensity, 0, 0.5f, fresnel_intensity);
+	
+	mp_GUI->addColumn();
+	mp_GUI->addLabel("Lighting");
+	mp_GUI->addParam("thickness", &thickness, 0, 10.0f, thickness);
+	mp_GUI->addParam("extinction_coefficient red", &extinction_coefficient.x, 0, 1, extinction_coefficient.x);
+	mp_GUI->addParam("extinction_coefficient green", &extinction_coefficient.y, 0, 1, extinction_coefficient.y);
+	mp_GUI->addParam("extinction_coefficient blue", &extinction_coefficient.z, 0, 1, extinction_coefficient.z);
+	
+
+	mp_GUI->addColumn();
 	mp_GUI->addLabel("Particles");
 	mp_GUI->addParam("explosion progress", &explode, 0.0f, 2.0f, explode);
 	mp_GUI->addButton("explode")->registerClick(this, &ShaderTestApp::Explode);
@@ -146,12 +180,16 @@ void ShaderTestApp::setup()
 	m_PrevModelView = ci::Matrix44f::identity();
 }
 
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 void ShaderTestApp::resize(cinder::app::ResizeEvent event)
 {
 	m_Cam.setAspectRatio(event.getAspectRatio());
 //	m_Cam.lookAt(Vec3f(0,-1,7), Vec3f::zero());
+	
+	//m_RecreateFBO = true;
 }
 
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 void ShaderTestApp::keyDown( KeyEvent event )
 {
 	if( event.getCode() == app::KeyEvent::KEY_f ) {
@@ -169,6 +207,7 @@ void ShaderTestApp::keyDown( KeyEvent event )
 	}
 }
 
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 void ShaderTestApp::DrawParticles()
 {
 	std::vector<Vec3f> pts = m_TriMesh.getVertices();
@@ -186,8 +225,16 @@ void ShaderTestApp::DrawParticles()
 	glEnd();
 }
 
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 void ShaderTestApp::draw()
 {
+	if(m_RecreateFBO)
+	{
+		gl::Fbo::Format fmt;
+		fmt.enableColorBuffer(true, 2);
+		m_FBO = gl::Fbo(getWindowWidth(), getWindowHeight(), fmt);
+	}
+	
 	DrawSceneToFBO();
 	PostProcess();
 	
@@ -203,6 +250,21 @@ void ShaderTestApp::draw()
 	mp_GUI->draw();
 }
 
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+void ShaderTestApp::BindShaderAndSetUniforms(gl::GlslProg& shader)
+{
+	shader.bind();
+	
+	shader.uniform("time", curr_time);	
+	shader.uniform("explode", explode);
+	
+	shader.uniform("resolution", resolution);
+	
+	shader.uniform("fresnel_power", fresnel_power);	
+	shader.uniform("fresnel_intensity", fresnel_intensity);
+}
+
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 void ShaderTestApp::DrawSceneToFBO()
 {
 	// this will restore the old framebuffer binding when we leave this function
@@ -235,7 +297,8 @@ void ShaderTestApp::DrawSceneToFBO()
 	
 	m_Cam.lookAt(Vec3f(-dist*sin(rot), 0, dist*cos(rot)), Vec3f::zero(), Vec3f(0,-1,0));
 	
-	float time = getElapsedSeconds();
+	curr_time = getElapsedSeconds();
+	resolution = getWindowSize();
 	
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
@@ -243,11 +306,11 @@ void ShaderTestApp::DrawSceneToFBO()
 	glEnable( GL_LIGHTING );
 	glEnable( GL_LIGHT0 );
 	
-	GLfloat light_position0[] = { 3, 1, 5, 1 };
-	glLightfv( GL_LIGHT0, GL_POSITION, light_position0 );
+	Vec4f light_position0 = Vec4f(6 * cos(curr_time), 1, 10 * -sin(curr_time), 1);
+	glLightfv( GL_LIGHT0, GL_POSITION, light_position0.ptr() );
 	
-	GLfloat light_color0[] = { 1,1,1,1 };
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color0);
+	ColorA light_color0 = ColorA(1,1,1,1);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color0.ptr());
 	
 	glLightfv(GL_LIGHT0, GL_SPECULAR, ColorA(1.0, 1.0, 0.0, 1.0));
 	
@@ -270,33 +333,42 @@ void ShaderTestApp::DrawSceneToFBO()
 	
 	gl::pushModelView();
 
-	//ci::Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.5f * sin(time), 1.0f, 0.0f).normalized(), sin(0.5f *  time) * M_PI);
-	ci::Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(5.0, 1.0f, 0.0f).normalized(), powf(sin(2.5f *  time), 3.0f) * M_PI * 0.5f);
+	//ci::Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0,1,0), 0.0f);
+	//m_PrevModelView = ci::Matrix44f::createRotation(Vec3f(0,1,0), -0.5f);
+	//ci::Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f).normalized(), -1.5f *  time * M_PI);
+	Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0, 1.0f, 0.0f).normalized(), powf(sin(1.5f *  curr_time), 3.0f) * M_PI * 0.5f);
+	model_view = Matrix44f::identity();
+	
 	gl::multModelView(model_view);
-	
-	Vec2f resolution = getWindowSize();
-	
-	m_Shader.bind();
-	
-	
-	m_Shader.uniform("time", time);	
-	m_ParticleShader.uniform("explode", explode);
 
-	m_Shader.uniform("resolution", resolution);
-
-	m_Shader.uniform("fresnel_power", fresnel_power);	
-	m_Shader.uniform("fresnel_intensity", fresnel_intensity);
+	gl::color(light_color0);
+	gl::drawSphere(light_position0.xyz(), 0.1f);
 	
+	
+	///////////////////////////////////////////////////////////
+	//Set unifroms and draw mesh
+	BindShaderAndSetUniforms(m_Shader);
+
 	m_Shader.uniform("previous_model_view", cam_mat * m_PrevModelView);
 	m_Shader.uniform("model_view", cam_mat * model_view);
 
-	gl::draw(m_Mesh);
-	m_Shader.unbind();
+	m_Shader.uniform("LightColor", ColorA(1.0, 1.0, 0.8f, 1.0f));
+	m_Shader.uniform("ExtinctionCoefficient", extinction_coefficient);
+	m_Shader.uniform("MaterialThickness", thickness);
 	
-	m_ParticleShader.bind();
-	m_ParticleShader.uniform("explode", explode);
+	m_Shader.uniform("particle", false);
+	
+	gl::draw(m_Mesh);
+
+	///////////////////////////////////////////////////////////
+	//Draw particles...
+	
+	m_Shader.uniform("particle", true);
+
 	//DrawParticles();
-	m_ParticleShader.unbind();
+	
+	m_Shader.unbind();
+
 	
 	gl::popModelView();
 
@@ -305,13 +377,15 @@ void ShaderTestApp::DrawSceneToFBO()
 	m_PrevModelView = model_view;
 }
 
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 void ShaderTestApp::PostProcess()
 {	
 	m_PostProcessShader.bind();
 	m_PostProcessShader.uniform("velocity_tex", 1);
-	
+	//m_PostProcessShader.uniform("time", time);	
+
 	gl::clear();
-//	gl::color(1, 1, 1, 1);
+	gl::color(1, 1, 1, 1);
 	
 	gl::setMatricesWindow(getWindowWidth(), getWindowHeight());
 
@@ -320,7 +394,7 @@ void ShaderTestApp::PostProcess()
 	m_FBO.getTexture(1).bind(1);
 	//m_FBO.bindTexture(0,0);
 	//m_FBO.bindTexture(0,1);
-	gl::draw(m_FBO.getTexture(0));
+	gl::draw(m_FBO.getTexture(0), Rectf(0,0,getWindowWidth(),getWindowHeight()));
 	m_FBO.unbindTexture();
 		
 	m_PostProcessShader.unbind();

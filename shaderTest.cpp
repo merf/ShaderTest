@@ -18,7 +18,7 @@ using namespace ci;
 using namespace ci::app;
 
 Vec3f extinction_coefficient = Vec3f(1.0, 1.0, 1.0);
-Vec4f light_pos = Vec4f(0.5f, 0.5f, 1.0f, 1.0f);
+Vec4f light_pos = Vec4f(-0.7f, 0.6f, 1.5f, 1.0f);
 float thickness = 0.6f;
 float shininess = 20.0;
 float fresnel_power = 0.5f;
@@ -44,6 +44,8 @@ class ShaderTestApp : public AppBasic
 	void draw();
 	void DrawParticles();
 	void DrawSceneToFBO();
+
+	void SetupLightsAndMaterials();
 	void PostProcess();
 	
 	bool Explode(MouseEvent event) { exploding = true; return true; }
@@ -174,9 +176,9 @@ void ShaderTestApp::setup()
 	mp_GUI->addParam("extinction red", &extinction_coefficient.x, 0, 1, extinction_coefficient.x);
 	mp_GUI->addParam("extinction green", &extinction_coefficient.y, 0, 1, extinction_coefficient.y);
 	mp_GUI->addParam("extinction blue", &extinction_coefficient.z, 0, 1, extinction_coefficient.z);
-	mp_GUI->addParam("light x", &light_pos.x, -5, 5, light_pos.x);
-	mp_GUI->addParam("light y", &light_pos.y, -5, 5, light_pos.y);
-	mp_GUI->addParam("light z", &light_pos.z, -5, 5, light_pos.z);
+	mp_GUI->addParam("light x", &light_pos.x, -2, 2, light_pos.x);
+	mp_GUI->addParam("light y", &light_pos.y, -2, 2, light_pos.y);
+	mp_GUI->addParam("light z", &light_pos.z, -2, 4, light_pos.z);
 	
 
 	mp_GUI->addColumn();
@@ -312,38 +314,20 @@ void ShaderTestApp::DrawSceneToFBO()
 	glEnable( GL_LIGHTING );
 	glEnable( GL_LIGHT0 );
 	
-	//Vec4f light_position0 = Vec4f(2 * cos(curr_time), 0, 2 * -sin(curr_time), 1);
-	//light_position0 = Vec4f(5, 1, 3, 1);
-	//light_pos = Vec4f(3 * cos(curr_time), 1, -3 * sin(curr_time), 1.0f);
-	glLightfv( GL_LIGHT0, GL_POSITION, light_pos.ptr() );
-	
-	ColorA light_color0 = ColorA(1,1,1,1);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color0.ptr());
-	
-	glLightfv(GL_LIGHT0, GL_SPECULAR, ColorA(1.0, 1.0, 1.0, 1.0));
-	
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_color);
-	
-	ColorA ambient_color = (diffuse_color * ColorA(0.5f, 0.5f, 1.0f, 1.0f)) * 0.1f;
-	glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_color);
-	
-	glMaterialfv(GL_FRONT, GL_SPECULAR, ColorA(1,1,1,specular_intensity));
-	glMaterialf(GL_FRONT, GL_SHININESS, shininess);
-	
 	gl::enableDepthRead();
 	gl::enableDepthWrite();
 	
 	gl::clear();
 
+	gl::pushMatrices();
+
+	SetupLightsAndMaterials();
+
+
 	//m_Cam.lookAt(Vec3f(-dist*sin(rot), 1, dist*cos(rot)), Vec3f::zero(), Vec3f(0,-1,0));
-	m_Cam.lookAt(Vec3f(dist, 0, 0), Vec3f::zero(), Vec3f(0,-1,0));
+	m_Cam.lookAt(Vec3f(0, 0, dist), Vec3f::zero(), Vec3f(0,-1,0));
 
 	gl::setMatrices(m_Cam);
-
-	glDisable(GL_LIGHTING);
-	gl::color(light_color0);
-	gl::drawSphere(light_pos.xyz(), 0.1f);
-	glEnable(GL_LIGHTING);
 
 	Matrix44f cam_mat =	m_Cam.getModelViewMatrix();
 
@@ -352,13 +336,17 @@ void ShaderTestApp::DrawSceneToFBO()
 
 	//ci::Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0,1,0), 0.0f);
 	//m_PrevModelView = ci::Matrix44f::createRotation(Vec3f(0,1,0), -0.5f);
-	Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f).normalized(), 0.1f *  curr_time * (float)M_PI);
+	Matrix44f model_matrix = ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f).normalized(), 0.1f *  curr_time * (float)M_PI);
 	//Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0, 1.0f, 0.0f).normalized(), powf(sin(1.5f *  curr_time), 3.0f) * M_PI * 0.5f);
-	//model_view = Matrix44f::identity();
+	model_matrix = Matrix44f::identity();
 	//model_view = ci::Matrix44f::createRotation(Vec3f(0.0f, 0.0f, 1.0f), (float)M_PI);
 
-	gl::multModelView(model_view);
+	gl::multModelView(model_matrix);
+
 	
+	//SetupLightsAndMaterials();
+
+
 	///////////////////////////////////////////////////////////
 	//Set unifroms and draw mesh
 	BindShaderAndSetUniforms(m_Shader);
@@ -366,7 +354,9 @@ void ShaderTestApp::DrawSceneToFBO()
 	m_Shader.uniform("LightPosition", light_pos);
 
 	m_Shader.uniform("previous_model_view", cam_mat * m_PrevModelView);
-	m_Shader.uniform("model_view", cam_mat * model_view);
+	m_Shader.uniform("model_view", cam_mat * model_matrix);
+
+	m_Shader.uniform("ModelMatrix", model_matrix);
 
 	m_Shader.uniform("LightColor", ColorA(1.0, 1.0, 0.8f, 1.0f));
 	m_Shader.uniform("ExtinctionCoefficient", extinction_coefficient);
@@ -386,12 +376,16 @@ void ShaderTestApp::DrawSceneToFBO()
 	
 	m_Shader.unbind();
 
-
 	glDisable(GL_LIGHTING);
+
+	gl::color(ColorA::white());
+	gl::drawSphere(light_pos.xyz(), 0.1f);
 
 	gl::popModelView();
 	
-	m_PrevModelView = model_view;
+	m_PrevModelView = model_matrix;
+
+	gl::popMatrices();
 }
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -418,5 +412,23 @@ void ShaderTestApp::PostProcess()
 	m_PostProcessShader.unbind();
 }
 
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+void ShaderTestApp::SetupLightsAndMaterials()
+{
+	glLightfv( GL_LIGHT0, GL_POSITION, light_pos.ptr() );
+
+	ColorA light_color0 = ColorA(1,1,1,1);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color0.ptr());
+
+	glLightfv(GL_LIGHT0, GL_SPECULAR, ColorA(1.0, 1.0, 1.0, 1.0));
+
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_color);
+
+	ColorA ambient_color = (diffuse_color * ColorA(0.5f, 0.5f, 1.0f, 1.0f)) * 0.1f;
+	glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_color);
+
+	glMaterialfv(GL_FRONT, GL_SPECULAR, ColorA(1,1,1,specular_intensity));
+	glMaterialf(GL_FRONT, GL_SHININESS, shininess);
+}
 
 CINDER_APP_BASIC( ShaderTestApp, RendererGl )

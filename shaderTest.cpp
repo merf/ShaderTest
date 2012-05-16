@@ -18,7 +18,7 @@ using namespace ci;
 using namespace ci::app;
 
 Vec3f extinction_coefficient = Vec3f(1.0, 1.0, 1.0);
-Vec3f light_pos = Vec3f(0.5f, 0.5f, 1.0f);
+Vec4f light_pos = Vec4f(0.5f, 0.5f, 1.0f, 1.0f);
 float thickness = 0.6f;
 float shininess = 20.0;
 float fresnel_power = 0.5f;
@@ -136,7 +136,7 @@ void ShaderTestApp::setup()
 		std::cout << "Unable to load shader" << std::endl;
 	}
 	
-	setWindowSize(640, 480);
+	setWindowSize(800, 600);
 
 	gl::Fbo::Format fmt;
 	fmt.enableColorBuffer(true, 2);
@@ -300,13 +300,9 @@ void ShaderTestApp::DrawSceneToFBO()
 		explode = math<float>::clamp(explode, 0.0, 10.0f);
 	}
 	
-	float dist = 5.0f - explode * 3.0f;
+	float dist = 6.0f - explode * 3.0f;
 	float rot = (float)M_PI * 2.0f * pow(explode, 2.0f);
 	
-	
-	//m_Cam.lookAt(Vec3f(-dist*sin(rot), 1, dist*cos(rot)), Vec3f::zero(), Vec3f(0,-1,0));
-	m_Cam.lookAt(Vec3f(0, 1, dist), Vec3f::zero(), Vec3f(0,1,0));
-
 	curr_time = (float)getElapsedSeconds();
 	resolution = getWindowSize();
 	
@@ -318,7 +314,7 @@ void ShaderTestApp::DrawSceneToFBO()
 	
 	//Vec4f light_position0 = Vec4f(2 * cos(curr_time), 0, 2 * -sin(curr_time), 1);
 	//light_position0 = Vec4f(5, 1, 3, 1);
-	light_pos = Vec3f(3 * cos(curr_time), 1, -3 * sin(curr_time));
+	//light_pos = Vec4f(3 * cos(curr_time), 1, -3 * sin(curr_time), 1.0f);
 	glLightfv( GL_LIGHT0, GL_POSITION, light_pos.ptr() );
 	
 	ColorA light_color0 = ColorA(1,1,1,1);
@@ -338,22 +334,31 @@ void ShaderTestApp::DrawSceneToFBO()
 	gl::enableDepthWrite();
 	
 	gl::clear();
-	
+
+	//m_Cam.lookAt(Vec3f(-dist*sin(rot), 1, dist*cos(rot)), Vec3f::zero(), Vec3f(0,-1,0));
+	m_Cam.lookAt(Vec3f(dist, 0, 0), Vec3f::zero(), Vec3f(0,-1,0));
+
 	gl::setMatrices(m_Cam);
-	
+
+	glDisable(GL_LIGHTING);
+	gl::color(light_color0);
+	gl::drawSphere(light_pos.xyz(), 0.1f);
+	glEnable(GL_LIGHTING);
+
 	Matrix44f cam_mat =	m_Cam.getModelViewMatrix();
-	
+
 	gl::pushModelView();
+
 
 	//ci::Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0,1,0), 0.0f);
 	//m_PrevModelView = ci::Matrix44f::createRotation(Vec3f(0,1,0), -0.5f);
 	Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f).normalized(), 0.1f *  curr_time * (float)M_PI);
 	//Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0, 1.0f, 0.0f).normalized(), powf(sin(1.5f *  curr_time), 3.0f) * M_PI * 0.5f);
-	model_view = Matrix44f::identity();
-	model_view = ci::Matrix44f::createRotation(Vec3f(0.0f, 0.0f, 1.0f), (float)M_PI);
-	
-	gl::multModelView(model_view);
+	//model_view = Matrix44f::identity();
+	//model_view = ci::Matrix44f::createRotation(Vec3f(0.0f, 0.0f, 1.0f), (float)M_PI);
 
+	gl::multModelView(model_view);
+	
 	///////////////////////////////////////////////////////////
 	//Set unifroms and draw mesh
 	BindShaderAndSetUniforms(m_Shader);
@@ -381,14 +386,10 @@ void ShaderTestApp::DrawSceneToFBO()
 	
 	m_Shader.unbind();
 
-	
-	gl::popModelView();
 
 	glDisable(GL_LIGHTING);
 
-	gl::color(light_color0);
-	gl::drawSphere(light_pos.xyz(), 0.1f);
-
+	gl::popModelView();
 	
 	m_PrevModelView = model_view;
 }

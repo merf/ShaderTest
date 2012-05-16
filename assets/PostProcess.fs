@@ -7,6 +7,7 @@ const int blur_samples = 1;
 void main()
 {
 	vec2 tc = gl_TexCoord[0].xy;
+	//tc.y = 1.0-tc.y;
 	gl_FragColor = texture2D(tex0, tc);
 	
 	return;

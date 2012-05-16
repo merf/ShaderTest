@@ -1,29 +1,15 @@
-uniform float time;
+varying vec3 normal;
+varying vec4 pos;
+varying vec4 rawpos;
 
-uniform vec4 LightPosition;
+void main() {
+  normal = gl_NormalMatrix * gl_Normal;
 
-varying vec3 WorldNormal;
-varying vec3 WorldVertexPos;
-varying vec3 EyeVec;
-varying vec3 LightVec;
- 
-void main()
-{
-	// Transforming The Normal To ModelView-Space
-    WorldNormal = gl_NormalMatrix * gl_Normal;
+  gl_Position = ftransform();
 
-	// Transform vertex to clip space.
-	gl_Position =  gl_ProjectionMatrix * gl_ModelViewMatrix * gl_Vertex;
+  pos = gl_ModelViewMatrix * gl_Vertex;
 
-	// Store world space vertex pos
-	WorldVertexPos = (gl_ModelViewMatrix * gl_Vertex).xyz;
+  rawpos = gl_Vertex;
 
-    // Calculating The Vector From The Vertex Position To The Light Position
-    LightVec = vec3(LightPosition.xyz - WorldVertexPos);
- 
-	EyeVec = -WorldVertexPos;
-
-	gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
-
-	gl_FrontColor = gl_Color;
+  gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
 }

@@ -16,15 +16,24 @@
     <Filter Include="shaders">
       <UniqueIdentifier>{b3fa9373-817a-4cb3-b44b-496d5d2958f5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{fd880631-5ca1-4d61-8992-3cfb18c38298}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\shaderTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\SimpleGUI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Resources.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SimpleGUI.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -38,6 +47,33 @@
     </None>
     <None Include="..\data\passThru_vert.glsl">
       <Filter>shaders</Filter>
+    </None>
+    <None Include="..\assets\Diffuse.fs">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="..\assets\PostProcess.fs">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="..\assets\Specular.fs">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="..\assets\SubSurface.fs">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="..\assets\Diffuse.vs">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="..\assets\particle.vs">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="..\assets\PassThrough.vs">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="..\assets\Specular.vs">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="..\assets\SubSurface.vs">
+      <Filter>Assets</Filter>
     </None>
   </ItemGroup>
 </Project>

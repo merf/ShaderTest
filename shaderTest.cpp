@@ -12,12 +12,13 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include "Palette.h"
+#include "Palette/Palette.h"
 
 using namespace ci;
 using namespace ci::app;
 
 Vec3f extinction_coefficient = Vec3f(1.0, 1.0, 1.0);
+Vec3f light_pos = Vec3f(0.5f, 0.5f, 1.0f);
 float thickness = 0.6f;
 float shininess = 20.0;
 float fresnel_power = 0.5f;
@@ -120,8 +121,8 @@ void ShaderTestApp::setup()
 	
 	try 
 	{
-		//mShader = gl::GlslProg(loadAsset("Diffuse.vs"), loadAsset("Diffuse.fs"));
-		m_Shader = gl::GlslProg(loadAsset("SubSurface.vs"), loadAsset("SubSurface.fs"));
+		m_Shader = gl::GlslProg(loadAsset("Diffuse.vs"), loadAsset("Diffuse.fs"));
+		//m_Shader = gl::GlslProg(loadAsset("SubSurface.vs"), loadAsset("SubSurface.fs"));
 		//m_Shader = gl::GlslProg(loadAsset("Specular.vs"), loadAsset("Specular.fs"));
 		m_PostProcessShader = gl::GlslProg(loadAsset("PassThrough.vs"), loadAsset("PostProcess.fs"));
 	}
@@ -135,31 +136,35 @@ void ShaderTestApp::setup()
 		std::cout << "Unable to load shader" << std::endl;
 	}
 	
-	setWindowSize(1280, 720);
+	setWindowSize(640, 480);
 
 	gl::Fbo::Format fmt;
 	fmt.enableColorBuffer(true, 2);
-	m_FBO = gl::Fbo(getWindowWidth(), getWindowHeight(), fmt);
+	fmt.setSamples(4);
+	m_FBO = gl::Fbo(1280, 720, fmt);
 
 	m_RecreateFBO = false;
 	
 	m_Cam.lookAt(Vec3f(0,0,10), Vec3f::zero());
 	
-	mp_Palette = new CPalette("goldfish.aco");
+	mp_Palette = new CPalette("candy.aco");
 	
 	mp_GUI = new mowa::sgui::SimpleGUI(this);
 	mp_GUI->bgColor = ColorA(0.2f, 0.2f, 0.2f, 0.8f);
-	mp_GUI->bgColor = mp_Palette->getColor(3);
-	mp_GUI->darkColor = mp_Palette->getColor(0);
-	mp_GUI->lightColor = mp_Palette->getColor(2);
-	mp_GUI->textColor = mp_Palette->getColor(1);
+	mp_GUI->darkColor = ColorA(0.4f, 0.4f, 0.4f, 0.8f);
+	mp_GUI->lightColor = ColorA(0.6f, 0.6f, 0.6f, 0.8f);
+	mp_GUI->textColor = ColorA(0.8f, 0.8f, 0.8f, 0.8f);
+	//mp_GUI->bgColor = mp_Palette->getColor(3);
+	//mp_GUI->darkColor = mp_Palette->getColor(2);
+	//mp_GUI->lightColor = mp_Palette->getColor(3);
+	//mp_GUI->textColor = mp_Palette->getColor(1) + ColorA(0.2f, 0.2f, 0.2f, 0.0f);
 //	mp_GUI->bgColor = ColorA(1.0f, 0.0f, 0.0f, 1.0f);
 	
 	mp_GUI->addColumn();
 	mp_GUI->addLabel("Shader");
 	mp_GUI->addParam("colour", &diffuse_color, diffuse_color);
 	mp_GUI->addParam("shininess", &shininess, 1.0f, 100, shininess);
-	mp_GUI->addParam("fresnel_power", &fresnel_power, 0.001, 5, fresnel_power);
+	mp_GUI->addParam("fresnel_power", &fresnel_power, 0.001f, 5, fresnel_power);
 	mp_GUI->addParam("specular_intensity", &specular_intensity, 0, 0.5f, specular_intensity);
 	mp_GUI->addParam("fresnel_intensity", &fresnel_intensity, 0, 0.5f, fresnel_intensity);
 	
@@ -169,6 +174,9 @@ void ShaderTestApp::setup()
 	mp_GUI->addParam("extinction red", &extinction_coefficient.x, 0, 1, extinction_coefficient.x);
 	mp_GUI->addParam("extinction green", &extinction_coefficient.y, 0, 1, extinction_coefficient.y);
 	mp_GUI->addParam("extinction blue", &extinction_coefficient.z, 0, 1, extinction_coefficient.z);
+	mp_GUI->addParam("light x", &light_pos.x, -5, 5, light_pos.x);
+	mp_GUI->addParam("light y", &light_pos.y, -5, 5, light_pos.y);
+	mp_GUI->addParam("light z", &light_pos.z, -5, 5, light_pos.z);
 	
 
 	mp_GUI->addColumn();
@@ -293,12 +301,13 @@ void ShaderTestApp::DrawSceneToFBO()
 	}
 	
 	float dist = 5.0f - explode * 3.0f;
-	float rot = M_PI * 2.0f * pow(explode, 2.0f);
+	float rot = (float)M_PI * 2.0f * pow(explode, 2.0f);
 	
 	
-	m_Cam.lookAt(Vec3f(-dist*sin(rot), 1, dist*cos(rot)), Vec3f::zero(), Vec3f(0,-1,0));
-	
-	curr_time = getElapsedSeconds();
+	//m_Cam.lookAt(Vec3f(-dist*sin(rot), 1, dist*cos(rot)), Vec3f::zero(), Vec3f(0,-1,0));
+	m_Cam.lookAt(Vec3f(0, 1, dist), Vec3f::zero(), Vec3f(0,1,0));
+
+	curr_time = (float)getElapsedSeconds();
 	resolution = getWindowSize();
 	
 	glCullFace(GL_BACK);
@@ -307,14 +316,15 @@ void ShaderTestApp::DrawSceneToFBO()
 	glEnable( GL_LIGHTING );
 	glEnable( GL_LIGHT0 );
 	
-	Vec4f light_position0 = Vec4f(2 * cos(curr_time), 0, 2 * -sin(curr_time), 1);
+	//Vec4f light_position0 = Vec4f(2 * cos(curr_time), 0, 2 * -sin(curr_time), 1);
 	//light_position0 = Vec4f(5, 1, 3, 1);
-	glLightfv( GL_LIGHT0, GL_POSITION, light_position0.ptr() );
+	light_pos = Vec3f(3 * cos(curr_time), 1, -3 * sin(curr_time));
+	glLightfv( GL_LIGHT0, GL_POSITION, light_pos.ptr() );
 	
 	ColorA light_color0 = ColorA(1,1,1,1);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color0.ptr());
 	
-	glLightfv(GL_LIGHT0, GL_SPECULAR, ColorA(1.0, 1.0, 0.0, 1.0));
+	glLightfv(GL_LIGHT0, GL_SPECULAR, ColorA(1.0, 1.0, 1.0, 1.0));
 	
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_color);
 	
@@ -337,19 +347,18 @@ void ShaderTestApp::DrawSceneToFBO()
 
 	//ci::Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0,1,0), 0.0f);
 	//m_PrevModelView = ci::Matrix44f::createRotation(Vec3f(0,1,0), -0.5f);
-	Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f).normalized(), 0.1f *  curr_time * M_PI);
+	Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f).normalized(), 0.1f *  curr_time * (float)M_PI);
 	//Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0, 1.0f, 0.0f).normalized(), powf(sin(1.5f *  curr_time), 3.0f) * M_PI * 0.5f);
-	//model_view = Matrix44f::identity();
+	model_view = Matrix44f::identity();
+	model_view = ci::Matrix44f::createRotation(Vec3f(0.0f, 0.0f, 1.0f), (float)M_PI);
 	
 	gl::multModelView(model_view);
 
-	gl::color(light_color0);
-	gl::drawSphere(light_position0.xyz(), 0.1f);
-	
-	
 	///////////////////////////////////////////////////////////
 	//Set unifroms and draw mesh
 	BindShaderAndSetUniforms(m_Shader);
+
+	m_Shader.uniform("LightPosition", light_pos);
 
 	m_Shader.uniform("previous_model_view", cam_mat * m_PrevModelView);
 	m_Shader.uniform("model_view", cam_mat * model_view);
@@ -376,6 +385,10 @@ void ShaderTestApp::DrawSceneToFBO()
 	gl::popModelView();
 
 	glDisable(GL_LIGHTING);
+
+	gl::color(light_color0);
+	gl::drawSphere(light_pos.xyz(), 0.1f);
+
 	
 	m_PrevModelView = model_view;
 }
@@ -397,7 +410,8 @@ void ShaderTestApp::PostProcess()
 	m_FBO.getTexture(1).bind(1);
 	//m_FBO.bindTexture(0,0);
 	//m_FBO.bindTexture(0,1);
-	gl::draw(m_FBO.getTexture(0), Rectf(0,0,getWindowWidth(),getWindowHeight()));
+	gl::draw(m_FBO.getTexture(0), Rectf(0, 0, (float)getWindowWidth(), (float)getWindowHeight()));
+	//gl::draw(m_FBO.getTexture(0));
 	m_FBO.unbindTexture();
 		
 	m_PostProcessShader.unbind();

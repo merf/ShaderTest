@@ -19,12 +19,15 @@ uniform vec3 LightPosition;
 // Varying variables to be sent to Fragment Shader
 varying vec3 worldNormal, eyeVec, lightVec, vertPos, lightPos;
 
+varying vec3 normal;
+varying vec4 pos;
+
 void subScatterVS(in vec4 ecVert)
 {
-	lightVec = gl_LightSource[0].position.xyz - ecVert.xyz;
-	eyeVec = -ecVert.xyz;
-	vertPos = ecVert.xyz;
-	lightPos = gl_LightSource[0].position.xyz;
+	lightPos = LightPosition;
+	lightVec = lightPos - pos;
+	eyeVec = -pos;
+	vertPos = pos;
 }
 
 ////////////////
@@ -33,6 +36,9 @@ void subScatterVS(in vec4 ecVert)
 
 void main()
 {
+	normal = gl_NormalMatrix * gl_Normal;
+	pos = gl_Vertex;
+
 	worldNormal = gl_NormalMatrix * gl_Normal;
 	
 	vec4 ecPos = gl_ModelViewProjectionMatrix * gl_Vertex;

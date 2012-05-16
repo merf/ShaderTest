@@ -27,6 +27,12 @@ uniform float RimScalar;
 // Varying variables to be sent to Fragment Shader
 varying vec3 worldNormal, eyeVec, lightVec, vertPos, lightPos;
 
+
+varying vec3 normal;
+varying vec4 pos;
+
+
+
 float halfLambert(in vec3 vect1, in vec3 vect2)
 {
 	float product = dot(vect1,vect2);
@@ -44,23 +50,27 @@ float blinnPhongSpecular(in vec3 normalVec, in vec3 lightVec, in float specPower
 vec4 subScatterFS()
 {
 	float attenuation = 10.0 * (1.0 / distance(lightPos, vertPos));
+	attenuation *= 0.1;
+	//attenuation = 1.0;
+
 	vec3 eVec = normalize(eyeVec);
 	vec3 lVec = normalize(lightVec);
 	vec3 wNorm = normalize(worldNormal);
-	
+
 	vec4 dotLN = vec4(halfLambert(lVec,wNorm) * attenuation);
 	//dotLN *= texture2D(Texture, gl_TexCoord[0].xy);
 	dotLN *= gl_FrontMaterial.diffuse;
 
 	//return dotLN;
 
-	vec3 indirectLightComponent = vec3(MaterialThickness * max(0.0,dot(-wNorm,lVec)));
+	vec3 indirectLightComponent = vec3(MaterialThickness * max(0.0,dot(-wNorm, lVec)));
 	indirectLightComponent += MaterialThickness * halfLambert(-eVec,lVec);
 	indirectLightComponent *= attenuation;
 	indirectLightComponent.r *= ExtinctionCoefficient.r;
 	indirectLightComponent.g *= ExtinctionCoefficient.g;
 	indirectLightComponent.b *= ExtinctionCoefficient.b;
 	
+	indirectLightComponent = vec3(0.0, 0.0, 0.0);
 	//return vec4(indirectLightComponent, 0.0) ;
 	
 	vec3 rim = vec3(1.0 - max(0.0,dot(wNorm,eVec)));
@@ -71,8 +81,9 @@ vec4 subScatterFS()
 	//return finalCol;
 	
 	finalCol.rgb += (rim * RimScalar * attenuation * finalCol.a);
-	finalCol.rgb += vec3(blinnPhongSpecular(wNorm,lVec,gl_FrontMaterial.shininess) * attenuation * gl_FrontMaterial.specular.rgb * finalCol.a * 0.05);
-	finalCol.rgb *= LightColor.rgb;
+
+	//finalCol.rgb += vec3(blinnPhongSpecular(wNorm,lVec,gl_FrontMaterial.shininess) * attenuation * gl_FrontMaterial.specular.rgb * finalCol.a * 0.05);
+	//finalCol.rgb *= LightColor.rgb;
 	
 	return finalCol;
 }

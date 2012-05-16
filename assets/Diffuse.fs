@@ -2,23 +2,23 @@ uniform vec2 resolution;
 uniform float time;
 uniform sampler2D tex0;
 
-varying vec2 texture_coordinate; 
-varying vec3 normal;
-varying vec3 vertex_to_light_vector;
- 
+varying vec3 WorldNormal;
+varying vec3 WorldVertexPos;
+varying vec3 EyeVec;
+varying vec3 LightVec;
+
+float halfLambert(in vec3 vect1, in vec3 vect2)
+{
+	float product = dot(vect1,vect2);
+	return product * 0.5 + 0.5;
+}
+
 void main()
 {
-    // Defining The Material Colors
-    const vec4 AmbientColor = vec4(0.1, 0.1, 0.1, 1.0);
-    const vec4 DiffuseColor = vec4(1.0, 1.0, 1.0, 1.0);
- 
-    // Scaling The Input Vector To Length 1
-    vec3 normalized_normal = normalize(normal);
-    vec3 normalized_vertex_to_light_vector = normalize(vertex_to_light_vector);
- 
-    // Calculating The Diffuse Term And Clamping It To [0;1]
-    float DiffuseTerm = clamp(dot(normal, vertex_to_light_vector), 0.0, 1.0);
- 
-    // Calculating The Final Color
-    gl_FragColor = (AmbientColor + DiffuseColor * DiffuseTerm) * texture2D(tex0, texture_coordinate);
+	vec3 light_dir = normalize(LightVec);
+	vec3 normal = normalize(WorldNormal);
+
+	vec4 diffuse = vec4(halfLambert(light_dir, normal));
+
+    gl_FragColor = diffuse;
 }

@@ -58,8 +58,8 @@ SimpleGUI::SimpleGUI(App* app) {
 void SimpleGUI::init(App* app) {	
 //	loadResource()
 	//textFont = Font(loadResource("pf_tempesta_seven.ttf"), 8);
-	textFont = Font(loadAsset("pf_tempesta_seven_condensed_bold.ttf"), 8);
-	//textFont = Font("Arial", 12);
+	//textFont = Font(loadAsset("pf_tempesta_seven_condensed_bold.ttf"), 8);
+	textFont = Font("Arial", 12);
 	selectedControl = NULL;
 	cbMouseDown = app->registerMouseDown( this, &SimpleGUI::onMouseDown );
 	cbMouseUp = app->registerMouseUp( this, &SimpleGUI::onMouseUp );	

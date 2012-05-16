@@ -44,7 +44,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\include;..\..\..\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\blocks;..\..\..\include;..\..\..\boost;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -91,14 +91,25 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\shaderTest.cpp" />
+    <ClCompile Include="..\SimpleGUI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Resources.h" />
+    <ClInclude Include="..\SimpleGUI.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resources.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\assets\Diffuse.fs" />
+    <None Include="..\assets\Diffuse.vs" />
+    <None Include="..\assets\particle.vs" />
+    <None Include="..\assets\PassThrough.vs" />
+    <None Include="..\assets\PostProcess.fs" />
+    <None Include="..\assets\Specular.fs" />
+    <None Include="..\assets\Specular.vs" />
+    <None Include="..\assets\SubSurface.fs" />
+    <None Include="..\assets\SubSurface.vs" />
     <None Include="..\data\gaussianBlur_frag.glsl" />
     <None Include="..\data\passThru_vert.glsl" />
   </ItemGroup>

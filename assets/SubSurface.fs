@@ -1,100 +1,85 @@
-////////////////////////////
-// SUB-SURFACE SCATTER FS //
-////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// SUB-SURFACE SCATTER FS												//
+// http://www.gamedev.net/community/forums/topic.asp?topic_id=481494	//
+//////////////////////////////////////////////////////////////////////////
 
-/* --------------------------
-SubScatter Fragment Shader:
-
-Fake sub-surface scatter lighting shader by InvalidPointer 2008.
-Found at
-http://www.gamedev.net/community/forums/topic.asp?topic_id=481494
-
-HLSL > GLSL translation
-toneburst 2008
--------------------------- */
-
-// Variables for lighting properties
+uniform vec4 LightPosition;
 uniform float MaterialThickness;
-uniform vec3 ExtinctionCoefficient; // Will show as X Y and Z ports in QC, but actually represent RGB values.
-uniform vec4 LightColor;
-//uniform vec4 BaseColor;
-//uniform vec4 SpecColor;
-//uniform float SpecPower;
+uniform vec3 ExtinctionCoefficient;
 
 uniform float RimScalar;
-//uniform sampler2D Texture;
+uniform float RimPower;
 
-// Varying variables to be sent to Fragment Shader
-varying vec3 worldNormal, eyeVec, lightVec, vertPos, lightPos;
+uniform float SpecularIntensity;
+uniform float SpecularPower;
+
+varying vec3 Normal;
+varying vec4 VertPos;
+varying vec4 RawPos;
+
+varying vec4 LightPos0;
+varying vec4 LightPos1;
+varying vec4 EyeVec;
 
 
-varying vec3 normal;
-varying vec4 pos;
-
-
-
-float halfLambert(in vec3 vect1, in vec3 vect2)
+float HalfLambert(in vec3 vect1, in vec3 vect2)
 {
-	float product = dot(vect1,vect2);
+	//float product = clamp(dot(vect1, vect2), 0.0, 1.0);
+	float product = dot(vect1, vect2);
 	return product * 0.5 + 0.5;
 }
 
-float blinnPhongSpecular(in vec3 normalVec, in vec3 lightVec, in float specPower)
+float BlinnPhongSpecular(in vec3 normalVec, in vec3 lightVec, in float specPower)
 {
 	vec3 halfAngle = normalize(normalVec + lightVec);
-	return pow(clamp(0.0,1.0,dot(normalVec,halfAngle)), specPower);
+	return pow(clamp(0.0,1.0,dot(normalVec, halfAngle)), specPower);
 }
 
-// Main fake sub-surface scatter lighting function
-
-vec4 subScatterFS()
+float Specular(in vec3 normalVec, in vec3 lightVec, in vec3 eyeVec, in float specPower)
 {
-	float attenuation = 10.0 * (1.0 / distance(lightPos, vertPos));
-	attenuation *= 0.1;
-	//attenuation = 1.0;
-
-	vec3 eVec = normalize(eyeVec);
-	vec3 lVec = normalize(lightVec);
-	vec3 wNorm = normalize(worldNormal);
-
-	vec4 dotLN = vec4(halfLambert(lVec,wNorm) * attenuation);
-	//dotLN *= texture2D(Texture, gl_TexCoord[0].xy);
-	dotLN *= gl_FrontMaterial.diffuse;
-
-	//return dotLN;
-
-	vec3 indirectLightComponent = vec3(MaterialThickness * max(0.0,dot(-wNorm, lVec)));
-	indirectLightComponent += MaterialThickness * halfLambert(-eVec,lVec);
-	indirectLightComponent *= attenuation;
-	indirectLightComponent.r *= ExtinctionCoefficient.r;
-	indirectLightComponent.g *= ExtinctionCoefficient.g;
-	indirectLightComponent.b *= ExtinctionCoefficient.b;
-	
-	indirectLightComponent = vec3(0.0, 0.0, 0.0);
-	//return vec4(indirectLightComponent, 0.0) ;
-	
-	vec3 rim = vec3(1.0 - max(0.0,dot(wNorm,eVec)));
-	rim *= rim;
-	rim *= max(0.0,dot(wNorm,lVec)) * gl_FrontMaterial.specular.rgb;
-	
-	vec4 finalCol = dotLN + vec4(indirectLightComponent,1.0);
-	//return finalCol;
-	
-	finalCol.rgb += (rim * RimScalar * attenuation * finalCol.a);
-
-	//finalCol.rgb += vec3(blinnPhongSpecular(wNorm,lVec,gl_FrontMaterial.shininess) * attenuation * gl_FrontMaterial.specular.rgb * finalCol.a * 0.05);
-	//finalCol.rgb *= LightColor.rgb;
-	
-	return finalCol;
+	vec3 r = -reflect(lightVec, normalVec);
+	return pow(clamp(dot(r, eyeVec), 0.0, 1.0), specPower);
 }
 
-////////////////
-//  MAIN LOOP //
-////////////////
+
+vec4 SubSurface(vec3 light_pos)
+{
+	float attenuation = (2.0 / distance(light_pos, VertPos.xyz));
+
+	vec3 light_dir = normalize(light_pos - VertPos.xyz);
+	vec3 eye_dir = normalize(EyeVec.xyz);
+
+	float diffuse = HalfLambert(light_dir, Normal) * attenuation;
+
+	vec3 indirect_component = vec3(MaterialThickness * max(0.0,dot(-Normal, light_dir)));
+	indirect_component += MaterialThickness * HalfLambert(-eye_dir, light_dir);
+	indirect_component *= attenuation;
+	indirect_component.r *= ExtinctionCoefficient.r;
+	indirect_component.g *= ExtinctionCoefficient.g;
+	indirect_component.b *= ExtinctionCoefficient.b;
+
+	vec3 rim = vec3(1.0 - max(0.0, dot(Normal, eye_dir)));
+	//rim = pow(rim, RimPower);
+	rim *= rim;
+	rim *= max(0.0, dot(Normal, light_dir)) * gl_FrontMaterial.specular;
+
+	//float specular = BlinnPhongSpecular(Normal, light_dir, SpecularPower);
+	float specular = Specular(Normal, light_dir, eye_dir, SpecularPower);
+	
+	
+	vec4 final_colour = diffuse * gl_FrontMaterial.diffuse;
+	final_colour += vec4(indirect_component, 1.0);
+
+	final_colour.rgb += (rim * RimScalar * attenuation * final_colour.a);
+	final_colour.rgb += specular * attenuation * gl_FrontMaterial.specular * final_colour.a * SpecularIntensity;
+
+//	final_colour = vec4(specular);
+
+	return final_colour;
+}
 
 void main()
 {
-	gl_FragColor = subScatterFS();
-	
-	//gl_FragColor = vec4(eyeVec, 1);
+	gl_FragData[0] = SubSurface(LightPos0) * gl_LightSource[0].diffuse;
+	gl_FragData[0] += SubSurface(LightPos1) * gl_LightSource[1].diffuse;
 }

@@ -1,53 +1,34 @@
-////////////////////////////
-// SUB-SURFACE SCATTER VS //
-////////////////////////////
+//////////////////////////////////////////////////////////////////////////
+// SUB-SURFACE SCATTER VS												//
+// http://www.gamedev.net/community/forums/topic.asp?topic_id=481494	//
+//////////////////////////////////////////////////////////////////////////
 
-/* --------------------------
-SubScatter Vertex Shader:
+//varying vec3 EyeVec;
+//varying vec3 LightPos;
+//varying vec3 LightVec;
 
-Fake sub-surface scatter lighting shader by InvalidPointer 2008.
-Found at
-http://www.gamedev.net/community/forums/topic.asp?topic_id=481494
+varying vec3 Normal;
+varying vec4 VertPos;
+varying vec4 RawPos;
 
-HLSL > GLSL translation
-toneburst 2008
--------------------------- */
-
-// Set light-position
-uniform vec3 LightPosition;
-
-// Varying variables to be sent to Fragment Shader
-varying vec3 worldNormal, eyeVec, lightVec, vertPos, lightPos;
-
-varying vec3 normal;
-varying vec4 pos;
-
-void subScatterVS(in vec4 ecVert)
-{
-	lightPos = LightPosition;
-	lightVec = lightPos - pos;
-	eyeVec = -pos;
-	vertPos = pos;
-}
-
-////////////////
-//  MAIN LOOP //
-////////////////
+varying vec4 LightPos0;
+varying vec4 LightPos1;
+varying vec4 EyeVec;
 
 void main()
 {
-	normal = gl_NormalMatrix * gl_Normal;
-	pos = gl_Vertex;
+	Normal = gl_NormalMatrix * gl_Normal;
 
-	worldNormal = gl_NormalMatrix * gl_Normal;
-	
-	vec4 ecPos = gl_ModelViewProjectionMatrix * gl_Vertex;
-	
-	// Call function to set varyings for subscatter FS
-	subScatterVS(ecPos);
-	
+	RawPos = gl_Vertex;
+
 	//Transform vertex by modelview and projection matrices
-	gl_Position = ecPos;
+	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+	
+	VertPos = gl_ModelViewMatrix * gl_Vertex;
+	LightPos0 = gl_ModelViewMatrix * gl_LightSource[0].position;
+	LightPos1 = gl_ModelViewMatrix * gl_LightSource[1].position;
+
+	EyeVec = -VertPos;
 
 	//Forward current texture coordinates after applying texture matrix
 	gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;

@@ -29,6 +29,7 @@ float fresnel_power = 0.5f;
 float specular_intensity = 0.05f;
 float fresnel_intensity = 1.1f;
 float explode = 0.0f;
+float motion_blur_amount = 40.0f;
 bool exploding = false;
 
 float curr_time;
@@ -149,8 +150,8 @@ void ShaderTestApp::setup()
 
 	gl::Fbo::Format fmt;
 	fmt.enableColorBuffer(true, 2);
-	fmt.setSamples(4);
-	m_FBO = gl::Fbo(1280, 720, fmt);
+	//fmt.setSamples(4);
+	m_FBO = gl::Fbo(800, 600, fmt);
 
 	m_RecreateFBO = false;
 	
@@ -176,6 +177,7 @@ void ShaderTestApp::setup()
 	mp_GUI->addParam("specular_intensity", &specular_intensity, 0, 0.5f, specular_intensity);
 	mp_GUI->addParam("fresnel_power", &fresnel_power, 0.001f, 5, fresnel_power);
 	mp_GUI->addParam("fresnel_intensity", &fresnel_intensity, 0, 2.0f, fresnel_intensity);
+	mp_GUI->addParam("motion_blur", &motion_blur_amount, 0, 100.0f, motion_blur_amount);
 	
 	mp_GUI->addColumn();
 	mp_GUI->addLabel("Lighting");
@@ -340,6 +342,7 @@ void ShaderTestApp::DrawSceneToFBO()
 	gl::enableDepthWrite();
 	
 	gl::clear();
+	gl::clear(ColorA(0.5, 0.5, 0.0, 1.0));
 
 	gl::pushMatrices();
 
@@ -361,7 +364,7 @@ void ShaderTestApp::DrawSceneToFBO()
 	Matrix44f model_matrix = ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f).normalized(), 0.1f *  curr_time * (float)M_PI);
 	//Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0, 1.0f, 0.0f).normalized(), powf(sin(1.5f *  curr_time), 3.0f) * M_PI * 0.5f);
 	model_matrix = Matrix44f::identity();
-	model_matrix = ci::Matrix44f::createRotation(Vec3f(0.0f, 0.0f, 1.0f), (float)M_PI) * ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), 0.73f * curr_time);
+	model_matrix = ci::Matrix44f::createRotation(Vec3f(0.0f, 0.0f, 1.0f), (float)M_PI) * ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), pow(sin(curr_time), 2.0f) * 2.0f * M_PI);
 
 	gl::multModelView(model_matrix);
 
@@ -370,11 +373,11 @@ void ShaderTestApp::DrawSceneToFBO()
 
 
 	///////////////////////////////////////////////////////////
-	//Set unifroms and draw mesh
+	//Set uniforms and draw mesh
 	BindShaderAndSetUniforms(m_Shader);
 
-	m_Shader.uniform("previous_model_view", cam_mat * m_PrevModelView);
-	m_Shader.uniform("model_view", cam_mat * model_matrix);
+	m_Shader.uniform("PrevModelView", cam_mat * m_PrevModelView);
+	m_Shader.uniform("ModelView", cam_mat * model_matrix);
 
 	m_Shader.uniform("ModelMatrix", model_matrix);
 
@@ -385,6 +388,7 @@ void ShaderTestApp::DrawSceneToFBO()
 
 	m_Shader.uniform("SpecularIntensity", specular_intensity);
 	m_Shader.uniform("SpecularPower", shininess);
+
 	//m_Shader.uniform("SpecularIntensity", fresnel_intensity);
 	
 	m_Shader.uniform("particle", false);
@@ -420,6 +424,9 @@ void ShaderTestApp::PostProcess()
 {	
 	m_PostProcessShader.bind();
 	m_PostProcessShader.uniform("velocity_tex", 1);
+	m_PostProcessShader.uniform("MotionBlurAmount", motion_blur_amount / (float)getWindowWidth());
+	//m_PostProcessShader.uniform("MotionBlurAmount", 0.1f);
+
 	//m_PostProcessShader.uniform("time", time);	
 
 	gl::clear();

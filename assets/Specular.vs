@@ -6,8 +6,8 @@ varying vec4 pix_vel;
 uniform float time;
 uniform float explode;
 
-uniform mat4 previous_model_view;
-uniform mat4 model_view;
+uniform mat4 PrevModelView;
+uniform mat4 ModelView;
 
 uniform bool particle;
 

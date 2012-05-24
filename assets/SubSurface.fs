@@ -21,6 +21,7 @@ varying vec4 LightPos0;
 varying vec4 LightPos1;
 varying vec4 EyeVec;
 
+varying vec4 PixelVelocity;
 
 float HalfLambert(in vec3 vect1, in vec3 vect2)
 {
@@ -82,4 +83,11 @@ void main()
 {
 	gl_FragData[0] = SubSurface(LightPos0) * gl_LightSource[0].diffuse;
 	gl_FragData[0] += SubSurface(LightPos1) * gl_LightSource[1].diffuse;
+
+	float dist = length(EyeVec.xyz);
+
+	gl_FragData[1] = PixelVelocity;
+	//gl_FragData[1] = vec4(0.5 + (2 / dist) * 0.5, 0.5, 0.0, 1.0);
+	//gl_FragData[1] = vec4(0.5, 0.5, 0.0, 1.0);
+	//gl_FragData[1] = vec4(1.0, 0.5, 0.0, 1.0);
 }

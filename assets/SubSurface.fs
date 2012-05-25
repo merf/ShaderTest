@@ -76,6 +76,8 @@ vec4 SubSurface(vec3 light_pos)
 
 //	final_colour = vec4(specular);
 
+	return vec4(Normal, 1.0);
+
 	return final_colour;
 }
 

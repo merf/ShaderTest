@@ -24,12 +24,13 @@ Vec3f extinction_coefficient = Vec3f(0.8f, 0.5f, 0.5f);
 float light_dist = 1.5f;
 float light_angle = 1.0f;
 float thickness = 0.1f;
-float shininess = 1.0;
+float shininess = 10.0;
 float fresnel_power = 0.5f;
 float specular_intensity = 0.05f;
 float fresnel_intensity = 1.1f;
 float explode = 0.0f;
 float motion_blur_amount = 40.0f;
+float jiggle_resolution = 1.0f;
 bool exploding = false;
 
 float curr_time;
@@ -146,12 +147,12 @@ void ShaderTestApp::setup()
 		std::cout << "Unable to load shader" << std::endl;
 	}
 	
-	setWindowSize(800, 600);
+	setWindowSize(1280, 720);
 
 	gl::Fbo::Format fmt;
 	fmt.enableColorBuffer(true, 2);
 	//fmt.setSamples(4);
-	m_FBO = gl::Fbo(800, 600, fmt);
+	m_FBO = gl::Fbo(1280, 720, fmt);
 
 	m_RecreateFBO = false;
 	
@@ -178,6 +179,7 @@ void ShaderTestApp::setup()
 	mp_GUI->addParam("fresnel_power", &fresnel_power, 0.001f, 5, fresnel_power);
 	mp_GUI->addParam("fresnel_intensity", &fresnel_intensity, 0, 2.0f, fresnel_intensity);
 	mp_GUI->addParam("motion_blur", &motion_blur_amount, 0, 100.0f, motion_blur_amount);
+	mp_GUI->addParam("jiggle_resolution", &jiggle_resolution, 0, 30.0f, jiggle_resolution);
 	
 	mp_GUI->addColumn();
 	mp_GUI->addLabel("Lighting");
@@ -268,14 +270,14 @@ void ShaderTestApp::draw()
 		light_dist * cos(curr_time * 1.34f), 
 		1.0f);
 
-	light_pos_0 = Vec4f(1, 
-		light_dist * sin(curr_time * 1.43f), 
-		1, 
+	light_pos_0 = Vec4f(light_dist, 
+		light_dist, 
+		light_dist, 
 		1.0f);
 
-	light_pos_1 = Vec4f(	-1, 
-		light_dist * sin(curr_time * 0.43f), 
-		-1, 
+	light_pos_1 = Vec4f(	-light_dist, 
+		light_dist, 
+		light_dist, 
 		1.0f);
 
 	//light_pos = Vec4f(0.0f, 0.0f, 0.0f, 1.0f);
@@ -352,7 +354,7 @@ void ShaderTestApp::DrawSceneToFBO()
 	gl::enableDepthWrite();
 	
 	gl::clear();
-	gl::clear(ColorA(0.5, 0.5, 0.0, 1.0));
+	//gl::clear(ColorA(0.5, 0.5, 0.0, 1.0));
 
 	gl::pushMatrices();
 
@@ -360,7 +362,7 @@ void ShaderTestApp::DrawSceneToFBO()
 
 
 	//m_Cam.lookAt(Vec3f(-dist*sin(rot), 1, dist*cos(rot)), Vec3f::zero(), Vec3f(0,-1,0));
-	m_Cam.lookAt(Vec3f(0, 0, dist), Vec3f::zero(), Vec3f(0,1,0));
+	m_Cam.lookAt(Vec3f(0, 0, dist), Vec3f::zero(), Vec3f(0,-1,0));
 
 	gl::setMatrices(m_Cam);
 
@@ -378,18 +380,25 @@ void ShaderTestApp::DrawSceneToFBO()
 
 	gl::multModelView(model_matrix);
 
+	float jiggle_amount = 0.1f / jiggle_resolution;
+
 	ci::Matrix44f bone_transforms[3] = 
 	{
-		Matrix44f::identity(),
-		//Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), sin(curr_time) * M_PI),
-		Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), sin(curr_time*2) * M_PI),
-		Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), sin(curr_time*3) * M_PI),
+		//Matrix44f::identity(),
+		//Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), sin(1.0f + curr_time) * M_PI * jiggle_amount * 2.0f),
+		//Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), sin(2.0f + curr_time*2) * M_PI * jiggle_amount),
+		//Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), sin(curr_time*3) * M_PI * jiggle_amount * 0.5f),
+		Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), 0.0f),
+		Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), M_PI * jiggle_amount),
+		Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), jiggle_amount * 0.5f),
 	};
 
 	//bone_transform = Matrix44f::identity();
 	//SetupLightsAndMaterials();
 
-
+	float final_jiggle = jiggle_resolution * 0.1f + jiggle_resolution * 0.9f * sin(curr_time);
+	final_jiggle = jiggle_resolution;
+	
 	///////////////////////////////////////////////////////////
 	//Set uniforms and draw mesh
 	BindShaderAndSetUniforms(m_Shader);
@@ -399,6 +408,7 @@ void ShaderTestApp::DrawSceneToFBO()
 
 	m_Shader.uniform("BoneTransforms", bone_transforms, 3);
 	m_Shader.uniform("BindPose", Matrix44f::identity());
+	m_Shader.uniform("JiggleResolution", final_jiggle);
 
 	m_Shader.uniform("ModelMatrix", model_matrix);
 

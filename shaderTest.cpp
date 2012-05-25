@@ -268,6 +268,16 @@ void ShaderTestApp::draw()
 		light_dist * cos(curr_time * 1.34f), 
 		1.0f);
 
+	light_pos_0 = Vec4f(1, 
+		light_dist * sin(curr_time * 1.43f), 
+		1, 
+		1.0f);
+
+	light_pos_1 = Vec4f(	-1, 
+		light_dist * sin(curr_time * 0.43f), 
+		-1, 
+		1.0f);
+
 	//light_pos = Vec4f(0.0f, 0.0f, 0.0f, 1.0f);
 		
 	DrawSceneToFBO();
@@ -364,11 +374,19 @@ void ShaderTestApp::DrawSceneToFBO()
 	Matrix44f model_matrix = ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f).normalized(), 0.1f *  curr_time * (float)M_PI);
 	//Matrix44f model_view = ci::Matrix44f::createRotation(Vec3f(0.0, 1.0f, 0.0f).normalized(), powf(sin(1.5f *  curr_time), 3.0f) * M_PI * 0.5f);
 	model_matrix = Matrix44f::identity();
-	model_matrix = ci::Matrix44f::createRotation(Vec3f(0.0f, 0.0f, 1.0f), (float)M_PI) * ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), pow(sin(curr_time), 2.0f) * 2.0f * M_PI);
+	//model_matrix = ci::Matrix44f::createRotation(Vec3f(0.0f, 0.0f, 1.0f), (float)M_PI) * ci::Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), pow(sin(curr_time), 2.0f) * 2.0f * M_PI);
 
 	gl::multModelView(model_matrix);
 
-	
+	ci::Matrix44f bone_transforms[3] = 
+	{
+		Matrix44f::identity(),
+		//Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), sin(curr_time) * M_PI),
+		Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), sin(curr_time*2) * M_PI),
+		Matrix44f::createRotation(Vec3f(0.0f, 1.0f, 0.0f), sin(curr_time*3) * M_PI),
+	};
+
+	//bone_transform = Matrix44f::identity();
 	//SetupLightsAndMaterials();
 
 
@@ -378,6 +396,9 @@ void ShaderTestApp::DrawSceneToFBO()
 
 	m_Shader.uniform("PrevModelView", cam_mat * m_PrevModelView);
 	m_Shader.uniform("ModelView", cam_mat * model_matrix);
+
+	m_Shader.uniform("BoneTransforms", bone_transforms, 3);
+	m_Shader.uniform("BindPose", Matrix44f::identity());
 
 	m_Shader.uniform("ModelMatrix", model_matrix);
 
